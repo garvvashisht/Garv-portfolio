@@ -7,9 +7,16 @@ const Certifications = () => {
     <section className="py-24 md:py-32">
       <div className="container-lg">
         <div className="mb-14 reveal">
-          <p className="eyebrow mb-4">05 — Certifications</p>
-          <h2 className="font-serif text-[40px] md:text-[56px] leading-[1.02] tracking-tight text-[#0C0D10] font-light max-w-3xl">
-            Credentials and ongoing <span className="italic text-[#1C3D5A]">study</span>.
+          <p className="eyebrow mb-4">
+            <span className="text-[#6B7280]">{`// `}</span>05 — certifications
+          </p>
+          <h2 className="font-serif text-[40px] md:text-[56px] leading-[1.02] tracking-tight text-[#E5E7EB] font-light max-w-3xl">
+            Credentials and ongoing <span className="italic" style={{
+              background: "linear-gradient(90deg, #22D3EE 0%, #34D399 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+            }}>study</span>.
           </h2>
         </div>
 
@@ -19,32 +26,32 @@ const Certifications = () => {
             return (
               <div
                 key={c.title}
-                className="reveal p-7 md:p-8 rounded-2xl bg-white border border-[#0C0D10]/10 hover:border-[#1C3D5A]/40 transition-colors"
+                className="reveal p-7 md:p-8 rounded-xl bg-[#0D0F15] border border-white/10 glow-hover"
               >
                 <div className="flex items-center justify-between mb-5">
-                  <div className="w-11 h-11 rounded-lg bg-[#ECE6D7] flex items-center justify-center">
+                  <div className="w-11 h-11 rounded-md bg-[#12141B] border border-white/8 flex items-center justify-center">
                     {inProgress ? (
-                      <Loader2 className="w-5 h-5 text-[#B8732E] animate-spin" />
+                      <Loader2 className="w-5 h-5 text-[#F59E0B] animate-spin" />
                     ) : (
-                      <Award className="w-5 h-5 text-[#1C3D5A]" />
+                      <Award className="w-5 h-5 text-[#22D3EE]" />
                     )}
                   </div>
                   <span
-                    className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-mono tracking-widest uppercase ${
+                    className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-mono tracking-widest uppercase border ${
                       inProgress
-                        ? "bg-[#B8732E]/10 text-[#B8732E]"
-                        : "bg-[#1C3D5A]/10 text-[#1C3D5A]"
+                        ? "bg-[#F59E0B]/10 text-[#F59E0B] border-[#F59E0B]/30"
+                        : "bg-[#22D3EE]/10 text-[#22D3EE] border-[#22D3EE]/30"
                     }`}
                   >
                     {c.status}
                   </span>
                 </div>
-                <h3 className="font-serif text-[22px] md:text-[26px] leading-tight text-[#0C0D10] font-medium">
+                <h3 className="font-serif text-[22px] md:text-[26px] leading-tight text-[#E5E7EB] font-medium">
                   {c.title}
                 </h3>
-                <div className="mt-4 flex items-center justify-between text-[13px] text-[#5C5E66]">
+                <div className="mt-4 flex items-center justify-between text-[13px] text-[#9CA3AF] font-mono">
                   <span>{c.issuer}</span>
-                  <span className="font-mono">{c.year}</span>
+                  <span>{c.year}</span>
                 </div>
               </div>
             );

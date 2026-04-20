@@ -16,10 +16,7 @@ const Contact = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.name || !form.email || !form.message) {
-      toast({
-        title: "Missing details",
-        description: "Please fill out every field before sending.",
-      });
+      toast({ title: "Missing details", description: "Please fill out every field before sending." });
       return;
     }
     setSending(true);
@@ -56,56 +53,61 @@ const Contact = () => {
   };
 
   const channels = [
-    { icon: Mail, label: "Email", value: personal.email, href: `mailto:${personal.email}` },
-    { icon: Linkedin, label: "LinkedIn", value: "garv-sharma6767", href: personal.linkedin },
-    { icon: Phone, label: "Phone", value: personal.phone, href: `tel:${personal.phone.replace(/\s/g, "")}` },
-    { icon: MapPin, label: "Based in", value: personal.location, href: "#" },
+    { icon: Mail, label: "email", value: personal.email, href: `mailto:${personal.email}` },
+    { icon: Linkedin, label: "linkedin", value: "garv-sharma6767", href: personal.linkedin },
+    { icon: Phone, label: "phone", value: personal.phone, href: `tel:${personal.phone.replace(/\s/g, "")}` },
+    { icon: MapPin, label: "based_in", value: personal.location, href: "#" },
   ];
 
   return (
-    <section id="contact" className="py-24 md:py-32 bg-[#0C0D10] text-[#F5F1E8] relative overflow-hidden">
+    <section id="contact" className="py-24 md:py-32 relative overflow-hidden bg-[#0A0B0F] border-y border-white/8">
       <div
-        className="absolute inset-0 opacity-[0.04] pointer-events-none"
+        className="absolute inset-0 opacity-[0.06] pointer-events-none"
         style={{
           backgroundImage:
-            "radial-gradient(circle at 20% 20%, #F5F1E8 1px, transparent 1px), radial-gradient(circle at 80% 80%, #F5F1E8 1px, transparent 1px)",
-          backgroundSize: "42px 42px, 42px 42px",
+            "radial-gradient(circle at 1px 1px, rgba(34,211,238,0.6) 1px, transparent 0)",
+          backgroundSize: "36px 36px",
         }}
       />
       <div className="container-lg relative">
         <div className="grid grid-cols-12 gap-8 md:gap-12">
           <div className="col-span-12 lg:col-span-5 reveal">
-            <p className="font-mono text-[11px] tracking-widest uppercase text-[#F5F1E8]/60 mb-4">
-              06 — Contact
+            <p className="eyebrow mb-4">
+              <span className="text-[#6B7280]">{`// `}</span>06 — contact
             </p>
-            <h2 className="font-serif text-[44px] md:text-[64px] leading-[1.02] tracking-tight font-light">
-              Let&apos;s build something <span className="italic text-[#D9A066]">data-driven</span>.
+            <h2 className="font-serif text-[44px] md:text-[64px] leading-[1.02] tracking-tight font-light text-[#E5E7EB]">
+              Let&apos;s build something <span className="italic" style={{
+                background: "linear-gradient(90deg, #22D3EE 0%, #34D399 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+              }}>data-driven</span>.
             </h2>
-            <p className="mt-6 text-[17px] leading-relaxed text-[#F5F1E8]/75 max-w-md">
+            <p className="mt-6 text-[17px] leading-relaxed text-[#9CA3AF] max-w-md">
               Open to Data Analyst roles across the UK and remote, freelance BI engagements, and collaborations on analytics problems worth solving.
             </p>
 
-            <div className="mt-10 space-y-4">
+            <div className="mt-10 space-y-3">
               {channels.map((c) => (
                 <a
                   key={c.label}
                   href={c.href}
                   target={c.href.startsWith("http") ? "_blank" : undefined}
                   rel="noreferrer"
-                  className="group flex items-center justify-between gap-4 p-4 rounded-xl border border-[#F5F1E8]/15 hover:border-[#D9A066]/60 hover:bg-[#F5F1E8]/5 transition-all"
+                  className="group flex items-center justify-between gap-4 p-4 rounded-lg border border-white/10 bg-[#0D0F15] hover:border-[#22D3EE]/50 transition-colors"
                 >
                   <div className="flex items-center gap-4 min-w-0">
-                    <span className="w-10 h-10 rounded-lg bg-[#F5F1E8]/10 flex items-center justify-center flex-shrink-0">
-                      <c.icon className="w-4 h-4 text-[#D9A066]" />
+                    <span className="w-10 h-10 rounded-md bg-[#12141B] border border-white/8 flex items-center justify-center flex-shrink-0">
+                      <c.icon className="w-4 h-4 text-[#22D3EE]" />
                     </span>
                     <span className="min-w-0">
-                      <span className="block font-mono text-[10px] tracking-widest uppercase text-[#F5F1E8]/55">
+                      <span className="block font-mono text-[10px] tracking-widest uppercase text-[#6B7280]">
                         {c.label}
                       </span>
-                      <span className="block text-[15px] text-[#F5F1E8] truncate">{c.value}</span>
+                      <span className="block text-[14px] text-[#E5E7EB] font-mono truncate">{c.value}</span>
                     </span>
                   </div>
-                  <ArrowUpRight className="w-4 h-4 text-[#F5F1E8]/50 group-hover:text-[#D9A066] group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-all flex-shrink-0" />
+                  <ArrowUpRight className="w-4 h-4 text-[#4B5563] group-hover:text-[#22D3EE] transition-colors flex-shrink-0" />
                 </a>
               ))}
             </div>
@@ -114,67 +116,80 @@ const Contact = () => {
           <div className="col-span-12 lg:col-span-7 reveal">
             <form
               onSubmit={handleSubmit}
-              className="bg-[#F5F1E8]/[0.04] backdrop-blur-sm rounded-2xl border border-[#F5F1E8]/15 p-7 md:p-10"
+              className="bg-[#0D0F15] rounded-xl border border-white/10 overflow-hidden"
             >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
-                <div>
-                  <label htmlFor="name" className="font-mono text-[10px] tracking-widest uppercase text-[#F5F1E8]/60">
-                    Your name
+              <div className="flex items-center justify-between px-5 py-2.5 border-b border-white/8 bg-[#12141B]">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#F87171]" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#F59E0B]" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#34D399]" />
+                </div>
+                <span className="font-mono text-[11px] tracking-widest text-[#6B7280]">send_message.sh</span>
+                <span className="font-mono text-[10px] text-[#34D399]">encrypted</span>
+              </div>
+              <div className="p-7 md:p-10">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+                  <div>
+                    <label htmlFor="name" className="font-mono text-[10px] tracking-widest uppercase text-[#6B7280]">
+                      <span className="text-[#22D3EE]">$</span> your_name
+                    </label>
+                    <input
+                      id="name"
+                      name="name"
+                      value={form.name}
+                      onChange={handleChange}
+                      maxLength={80}
+                      required
+                      className="mt-2 w-full bg-transparent border-b border-white/15 focus:border-[#22D3EE] outline-none py-2 text-[16px] text-[#E5E7EB] placeholder:text-[#4B5563] font-mono transition-colors"
+                      placeholder="Jane Doe"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="email" className="font-mono text-[10px] tracking-widest uppercase text-[#6B7280]">
+                      <span className="text-[#22D3EE]">$</span> email
+                    </label>
+                    <input
+                      id="email"
+                      name="email"
+                      type="email"
+                      value={form.email}
+                      onChange={handleChange}
+                      required
+                      className="mt-2 w-full bg-transparent border-b border-white/15 focus:border-[#22D3EE] outline-none py-2 text-[16px] text-[#E5E7EB] placeholder:text-[#4B5563] font-mono transition-colors"
+                      placeholder="jane@company.com"
+                    />
+                  </div>
+                </div>
+                <div className="mb-8">
+                  <label htmlFor="message" className="font-mono text-[10px] tracking-widest uppercase text-[#6B7280]">
+                    <span className="text-[#22D3EE]">$</span> what_are_you_working_on
                   </label>
-                  <input
-                    id="name"
-                    name="name"
-                    value={form.name}
+                  <textarea
+                    id="message"
+                    name="message"
+                    rows={5}
+                    value={form.message}
                     onChange={handleChange}
-                    maxLength={80}
                     required
-                    className="mt-2 w-full bg-transparent border-b border-[#F5F1E8]/20 focus:border-[#D9A066] outline-none py-2 text-[16px] text-[#F5F1E8] placeholder:text-[#F5F1E8]/30 transition-colors"
-                    placeholder="Jane Doe"
+                    minLength={5}
+                    maxLength={2000}
+                    className="mt-2 w-full bg-transparent border-b border-white/15 focus:border-[#22D3EE] outline-none py-2 text-[16px] text-[#E5E7EB] placeholder:text-[#4B5563] resize-none transition-colors"
+                    placeholder="Tell me about the dashboard, the pipeline or the decision you need..."
                   />
                 </div>
-                <div>
-                  <label htmlFor="email" className="font-mono text-[10px] tracking-widest uppercase text-[#F5F1E8]/60">
-                    Email
-                  </label>
-                  <input
-                    id="email"
-                    name="email"
-                    type="email"
-                    value={form.email}
-                    onChange={handleChange}
-                    required
-                    className="mt-2 w-full bg-transparent border-b border-[#F5F1E8]/20 focus:border-[#D9A066] outline-none py-2 text-[16px] text-[#F5F1E8] placeholder:text-[#F5F1E8]/30 transition-colors"
-                    placeholder="jane@company.com"
-                  />
+                <div className="flex items-center justify-between flex-wrap gap-4">
+                  <p className="text-[11px] font-mono text-[#6B7280]">
+                    <span className="text-[#34D399]">✔</span> typical reply time &lt; 48h
+                  </p>
+                  <button
+                    type="submit"
+                    disabled={sending}
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-md bg-[#22D3EE] text-[#0A0B0F] text-[13px] font-mono font-semibold hover:bg-[#67E8F9] transition-colors disabled:opacity-60"
+                  >
+                    {sending ? "sending..." : "send_message()"}
+                    <Send className="w-4 h-4" />
+                  </button>
                 </div>
-              </div>
-              <div className="mb-8">
-                <label htmlFor="message" className="font-mono text-[10px] tracking-widest uppercase text-[#F5F1E8]/60">
-                  What are you working on?
-                </label>
-                <textarea
-                  id="message"
-                  name="message"
-                  rows={5}
-                  value={form.message}
-                  onChange={handleChange}
-                  required
-                  minLength={5}
-                  maxLength={2000}
-                  className="mt-2 w-full bg-transparent border-b border-[#F5F1E8]/20 focus:border-[#D9A066] outline-none py-2 text-[16px] text-[#F5F1E8] placeholder:text-[#F5F1E8]/30 resize-none transition-colors"
-                  placeholder="Tell me about the dashboard, the pipeline or the decision you need..."
-                />
-              </div>
-              <div className="flex items-center justify-between flex-wrap gap-4">
-                <p className="text-[12px] text-[#F5F1E8]/50">Typical reply time — within 48 hours.</p>
-                <button
-                  type="submit"
-                  disabled={sending}
-                  className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full bg-[#F5F1E8] text-[#0C0D10] text-[15px] font-medium hover:bg-[#D9A066] hover:text-[#0C0D10] transition-colors disabled:opacity-60"
-                >
-                  {sending ? "Sending..." : "Send message"}
-                  <Send className="w-4 h-4" />
-                </button>
               </div>
             </form>
           </div>

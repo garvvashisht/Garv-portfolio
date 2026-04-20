@@ -1,6 +1,6 @@
 .App {
   min-height: 100vh;
-  background: #F5F1E8;
+  background: #0A0B0F;
   position: relative;
   overflow-x: hidden;
 }
@@ -11,6 +11,8 @@
   margin-right: auto;
   padding-left: 1.5rem;
   padding-right: 1.5rem;
+  position: relative;
+  z-index: 1;
 }
 
 @media (min-width: 768px) {
@@ -26,5 +28,13 @@
   font-size: 0.72rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: #5C5E66;
+  color: #22D3EE;
+}
+
+.eyebrow-muted {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #6B7280;
 }

@@ -27,11 +27,12 @@ const Bar = ({ level }) => {
   }, [level]);
 
   return (
-    <div ref={ref} className="h-[3px] w-full bg-[#0C0D10]/10 overflow-hidden rounded-full">
+    <div ref={ref} className="relative h-[4px] w-full bg-white/8 rounded-full overflow-hidden">
       <div
-        className="h-full bg-[#1C3D5A]"
+        className="h-full rounded-full"
         style={{
           width: `${w}%`,
+          background: "linear-gradient(90deg, #22D3EE 0%, #34D399 100%)",
           transition: "width 1.2s cubic-bezier(0.22,1,0.36,1)",
         }}
       />
@@ -44,9 +45,16 @@ const Skills = () => {
     <section id="skills" className="py-24 md:py-32">
       <div className="container-lg">
         <div className="mb-14 reveal">
-          <p className="eyebrow mb-4">03 — Skills</p>
-          <h2 className="font-serif text-[40px] md:text-[56px] leading-[1.02] tracking-tight text-[#0C0D10] font-light max-w-3xl">
-            The toolkit behind the <span className="italic text-[#1C3D5A]">outcomes</span>.
+          <p className="eyebrow mb-4">
+            <span className="text-[#6B7280]">{`// `}</span>03 — skills
+          </p>
+          <h2 className="font-serif text-[40px] md:text-[56px] leading-[1.02] tracking-tight text-[#E5E7EB] font-light max-w-3xl">
+            The toolkit behind the <span className="italic" style={{
+              background: "linear-gradient(90deg, #22D3EE 0%, #34D399 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+            }}>outcomes</span>.
           </h2>
         </div>
 
@@ -56,20 +64,25 @@ const Skills = () => {
             return (
               <div
                 key={g.title}
-                className="reveal group p-7 md:p-8 rounded-2xl bg-white border border-[#0C0D10]/10 hover:border-[#1C3D5A]/40 transition-colors duration-300"
+                className="reveal p-7 md:p-8 rounded-xl bg-[#0D0F15] border border-white/8 glow-hover"
               >
-                <div className="flex items-center gap-3 mb-7">
-                  <div className="w-10 h-10 rounded-lg bg-[#ECE6D7] flex items-center justify-center">
-                    <Icon className="w-5 h-5 text-[#1C3D5A]" />
+                <div className="flex items-center justify-between mb-7">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-md bg-[#12141B] border border-white/8 flex items-center justify-center">
+                      <Icon className="w-5 h-5 text-[#22D3EE]" />
+                    </div>
+                    <h3 className="font-serif text-[22px] font-medium text-[#E5E7EB]">{g.title}</h3>
                   </div>
-                  <h3 className="font-serif text-[22px] font-medium text-[#0C0D10]">{g.title}</h3>
+                  <span className="font-mono text-[10px] tracking-widest text-[#6B7280]">
+                    MOD_{String(i + 1).padStart(2, "0")}
+                  </span>
                 </div>
                 <ul className="space-y-5">
                   {g.items.map((it) => (
                     <li key={it.name}>
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-[14px] text-[#0C0D10] font-medium">{it.name}</span>
-                        <span className="font-mono text-[11px] text-[#5C5E66]">{it.level}%</span>
+                        <span className="text-[14px] text-[#E5E7EB] font-medium">{it.name}</span>
+                        <span className="font-mono text-[11px] text-[#22D3EE]">{it.level}%</span>
                       </div>
                       <Bar level={it.level} />
                     </li>
