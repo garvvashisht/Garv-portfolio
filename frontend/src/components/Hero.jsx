@@ -52,13 +52,15 @@ const Hero = () => {
                 View case studies
                 <ArrowUpRight className="w-4 h-4" />
               </button>
-              <button
-                onClick={() => scrollTo("contact")}
+              <a
+                href={cvDownloadUrl("pdf")}
+                target="_blank"
+                rel="noreferrer"
                 className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full border border-[#0C0D10]/20 text-[#0C0D10] text-[15px] font-medium hover:bg-[#0C0D10]/5 transition-colors"
               >
                 <Download className="w-4 h-4" />
-                Contact for CV
-              </button>
+                Download CV
+              </a>
             </div>
           </div>
 
