@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { personal } from "../mock";
 import { Mail, Linkedin, Phone, MapPin, Send, ArrowUpRight } from "lucide-react";
 import { useToast } from "../hooks/use-toast";
+import { submitContact } from "../api/client";
 
 const Contact = () => {
   const { toast } = useToast();
@@ -12,7 +13,7 @@ const Contact = () => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.name || !form.email || !form.message) {
       toast({
@@ -22,18 +23,36 @@ const Contact = () => {
       return;
     }
     setSending(true);
-    // Frontend-only mock: store in localStorage
-    const submissions = JSON.parse(localStorage.getItem("gs_messages") || "[]");
-    submissions.push({ ...form, at: new Date().toISOString() });
-    localStorage.setItem("gs_messages", JSON.stringify(submissions));
-    setTimeout(() => {
-      setSending(false);
+    try {
+      await submitContact({
+        name: form.name.trim(),
+        email: form.email.trim(),
+        message: form.message.trim(),
+      });
+      const firstName = form.name.split(" ")[0];
       setForm({ name: "", email: "", message: "" });
       toast({
-        title: "Message queued",
-        description: `Thanks ${form.name.split(" ")[0]} — I will reply within 48 hours.`,
+        title: "Message sent",
+        description: `Thanks ${firstName} — I will reply within 48 hours.`,
       });
-    }, 700);
+    } catch (err) {
+      const status = err?.response?.status;
+      const detail = err?.response?.data?.detail;
+      let title = "Could not send";
+      let description = "Something went wrong, please try again in a moment.";
+      if (status === 429) {
+        title = "Slow down";
+        description = "Too many messages from this device — try again in a minute.";
+      } else if (status === 422) {
+        title = "Check the details";
+        description = "Please make sure the email looks right and the message is at least 5 characters.";
+      } else if (typeof detail === "string") {
+        description = detail;
+      }
+      toast({ title, description });
+    } finally {
+      setSending(false);
+    }
   };
 
   const channels = [
@@ -45,7 +64,8 @@ const Contact = () => {
 
   return (
     <section id="contact" className="py-24 md:py-32 bg-[#0C0D10] text-[#F5F1E8] relative overflow-hidden">
-      <div className="absolute inset-0 opacity-[0.04] pointer-events-none"
+      <div
+        className="absolute inset-0 opacity-[0.04] pointer-events-none"
         style={{
           backgroundImage:
             "radial-gradient(circle at 20% 20%, #F5F1E8 1px, transparent 1px), radial-gradient(circle at 80% 80%, #F5F1E8 1px, transparent 1px)",
@@ -106,6 +126,8 @@ const Contact = () => {
                     name="name"
                     value={form.name}
                     onChange={handleChange}
+                    maxLength={80}
+                    required
                     className="mt-2 w-full bg-transparent border-b border-[#F5F1E8]/20 focus:border-[#D9A066] outline-none py-2 text-[16px] text-[#F5F1E8] placeholder:text-[#F5F1E8]/30 transition-colors"
                     placeholder="Jane Doe"
                   />
@@ -120,6 +142,7 @@ const Contact = () => {
                     type="email"
                     value={form.email}
                     onChange={handleChange}
+                    required
                     className="mt-2 w-full bg-transparent border-b border-[#F5F1E8]/20 focus:border-[#D9A066] outline-none py-2 text-[16px] text-[#F5F1E8] placeholder:text-[#F5F1E8]/30 transition-colors"
                     placeholder="jane@company.com"
                   />
@@ -135,6 +158,9 @@ const Contact = () => {
                   rows={5}
                   value={form.message}
                   onChange={handleChange}
+                  required
+                  minLength={5}
+                  maxLength={2000}
                   className="mt-2 w-full bg-transparent border-b border-[#F5F1E8]/20 focus:border-[#D9A066] outline-none py-2 text-[16px] text-[#F5F1E8] placeholder:text-[#F5F1E8]/30 resize-none transition-colors"
                   placeholder="Tell me about the dashboard, the pipeline or the decision you need..."
                 />

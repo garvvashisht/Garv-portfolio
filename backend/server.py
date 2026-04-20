@@ -1,89 +1,259 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, HTTPException, Request, Query, BackgroundTasks
+from fastapi.responses import FileResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
-from pathlib import Path
-from pydantic import BaseModel, Field, ConfigDict
-from typing import List
 import uuid
+import ssl
+from pathlib import Path
 from datetime import datetime, timezone
+from typing import List, Optional
+from collections import defaultdict, deque
+import time
+import asyncio
+
+from pydantic import BaseModel, Field, EmailStr, constr
+import aiosmtplib
+from email.message import EmailMessage
 
 
+# --------------------------------------------------------------------------- #
+# Setup
+# --------------------------------------------------------------------------- #
 ROOT_DIR = Path(__file__).parent
-load_dotenv(ROOT_DIR / '.env')
+STATIC_DIR = ROOT_DIR / "static"
+load_dotenv(ROOT_DIR / ".env")
 
-# MongoDB connection
-mongo_url = os.environ['MONGO_URL']
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logger = logging.getLogger("portfolio")
+
+mongo_url = os.environ["MONGO_URL"]
 client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
+db = client[os.environ["DB_NAME"]]
 
-# Create the main app without a prefix
-app = FastAPI()
+SMTP_HOST = os.environ.get("SMTP_HOST", "")
+SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
+SMTP_USER = os.environ.get("SMTP_USER", "")
+SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "")
+SMTP_FROM_NAME = os.environ.get("SMTP_FROM_NAME", "Portfolio Contact")
+NOTIFY_EMAIL = os.environ.get("NOTIFY_EMAIL", SMTP_USER)
+ADMIN_KEY = os.environ.get("ADMIN_KEY", "")
 
-# Create a router with the /api prefix
-api_router = APIRouter(prefix="/api")
+app = FastAPI(title="Garv Sharma Portfolio API")
+api = APIRouter(prefix="/api")
 
 
-# Define Models
-class StatusCheck(BaseModel):
-    model_config = ConfigDict(extra="ignore")  # Ignore MongoDB's _id field
-    
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    client_name: str
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+# --------------------------------------------------------------------------- #
+# Rate limit (simple in-memory per-IP)
+# --------------------------------------------------------------------------- #
+_hits: dict = defaultdict(deque)
+RL_WINDOW = 60  # seconds
+RL_LIMIT = 5
 
-class StatusCheckCreate(BaseModel):
-    client_name: str
 
-# Add your routes to the router instead of directly to app
-@api_router.get("/")
+def _rate_limit(ip: str):
+    now = time.time()
+    q = _hits[ip]
+    while q and now - q[0] > RL_WINDOW:
+        q.popleft()
+    if len(q) >= RL_LIMIT:
+        raise HTTPException(status_code=429, detail="Too many requests, please wait a minute.")
+    q.append(now)
+
+
+# --------------------------------------------------------------------------- #
+# Models
+# --------------------------------------------------------------------------- #
+class ContactIn(BaseModel):
+    name: constr(strip_whitespace=True, min_length=1, max_length=80)
+    email: EmailStr
+    message: constr(strip_whitespace=True, min_length=5, max_length=2000)
+
+
+class ContactOut(BaseModel):
+    success: bool
+    id: str
+    emailed: bool
+
+
+class MessageRecord(BaseModel):
+    id: str
+    name: str
+    email: str
+    message: str
+    ip: Optional[str] = None
+    user_agent: Optional[str] = None
+    created_at: datetime
+    emailed: bool = False
+
+
+# --------------------------------------------------------------------------- #
+# Email helper
+# --------------------------------------------------------------------------- #
+async def _send_email(record: dict) -> bool:
+    if not (SMTP_HOST and SMTP_USER and SMTP_PASSWORD and NOTIFY_EMAIL):
+        logger.warning("SMTP not configured — skipping email send")
+        return False
+    try:
+        msg = EmailMessage()
+        msg["From"] = f"{SMTP_FROM_NAME} <{SMTP_USER}>"
+        msg["To"] = NOTIFY_EMAIL
+        msg["Reply-To"] = record["email"]
+        msg["Subject"] = f"Portfolio contact — {record['name']}"
+        body = (
+            f"New message from your portfolio\n"
+            f"----------------------------------------\n"
+            f"Name    : {record['name']}\n"
+            f"Email   : {record['email']}\n"
+            f"When    : {record['created_at'].isoformat()} UTC\n"
+            f"IP      : {record.get('ip', '-')}\n"
+            f"Agent   : {record.get('user_agent', '-')}\n"
+            f"----------------------------------------\n\n"
+            f"{record['message']}\n"
+        )
+        msg.set_content(body)
+
+        ctx = ssl.create_default_context()
+        await aiosmtplib.send(
+            msg,
+            hostname=SMTP_HOST,
+            port=SMTP_PORT,
+            username=SMTP_USER,
+            password=SMTP_PASSWORD,
+            start_tls=True,
+            tls_context=ctx,
+            timeout=20,
+        )
+        logger.info("Notification email sent to %s", NOTIFY_EMAIL)
+        return True
+    except Exception as e:  # noqa: BLE001
+        logger.error("Email send failed: %s", e)
+        return False
+
+
+async def _email_and_mark(record: dict):
+    ok = await _send_email(record)
+    try:
+        await db.contact_messages.update_one(
+            {"id": record["id"]}, {"$set": {"emailed": ok}}
+        )
+    except Exception as e:  # noqa: BLE001
+        logger.error("Failed to update emailed flag: %s", e)
+
+
+# --------------------------------------------------------------------------- #
+# Routes
+# --------------------------------------------------------------------------- #
+@api.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return {"message": "Garv Sharma Portfolio API", "status": "ok"}
 
-@api_router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
-    status_dict = input.model_dump()
-    status_obj = StatusCheck(**status_dict)
-    
-    # Convert to dict and serialize datetime to ISO string for MongoDB
-    doc = status_obj.model_dump()
-    doc['timestamp'] = doc['timestamp'].isoformat()
-    
-    _ = await db.status_checks.insert_one(doc)
-    return status_obj
 
-@api_router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
-    # Exclude MongoDB's _id field from the query results
-    status_checks = await db.status_checks.find({}, {"_id": 0}).to_list(1000)
-    
-    # Convert ISO string timestamps back to datetime objects
-    for check in status_checks:
-        if isinstance(check['timestamp'], str):
-            check['timestamp'] = datetime.fromisoformat(check['timestamp'])
-    
-    return status_checks
+@api.get("/health")
+async def health():
+    db_ok = True
+    try:
+        await db.command("ping")
+    except Exception:
+        db_ok = False
+    return {
+        "status": "ok",
+        "db": db_ok,
+        "smtp": bool(SMTP_HOST and SMTP_USER and SMTP_PASSWORD),
+        "time": datetime.now(timezone.utc).isoformat(),
+    }
 
-# Include the router in the main app
-app.include_router(api_router)
+
+@api.post("/contact", response_model=ContactOut)
+async def submit_contact(payload: ContactIn, request: Request, bg: BackgroundTasks):
+    ip = (request.headers.get("x-forwarded-for") or request.client.host or "").split(",")[0].strip()
+    _rate_limit(ip or "unknown")
+
+    record = {
+        "id": str(uuid.uuid4()),
+        "name": payload.name,
+        "email": payload.email,
+        "message": payload.message,
+        "ip": ip,
+        "user_agent": request.headers.get("user-agent", ""),
+        "created_at": datetime.now(timezone.utc),
+        "emailed": False,
+    }
+
+    try:
+        await db.contact_messages.insert_one(record)
+    except Exception as e:
+        logger.error("Mongo insert failed: %s", e)
+        raise HTTPException(status_code=500, detail="Could not save message, please try again.")
+
+    # Fire email in background so response is fast
+    bg.add_task(_email_and_mark, record)
+
+    return ContactOut(success=True, id=record["id"], emailed=False)
+
+
+@api.get("/cv")
+async def download_cv(format: str = Query("pdf", pattern="^(pdf|docx)$")):
+    filename_map = {
+        "pdf": ("Garv_Sharma_CV.pdf", "application/pdf"),
+        "docx": (
+            "Garv_Sharma_CV.docx",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        ),
+    }
+    fname, mime = filename_map[format]
+    path = STATIC_DIR / fname
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="CV file not found")
+
+    # best-effort counter
+    async def _count():
+        try:
+            await db.cv_downloads.insert_one(
+                {"id": str(uuid.uuid4()), "format": format, "at": datetime.now(timezone.utc)}
+            )
+        except Exception as e:  # noqa: BLE001
+            logger.error("cv count failed: %s", e)
+
+    asyncio.create_task(_count())
+
+    return FileResponse(
+        path=str(path),
+        media_type=mime,
+        filename=fname,
+        headers={"Cache-Control": "no-store"},
+    )
+
+
+@api.get("/admin/messages")
+async def admin_messages(key: str = Query(...), limit: int = Query(50, ge=1, le=200)):
+    if not ADMIN_KEY or key != ADMIN_KEY:
+        raise HTTPException(status_code=401, detail="Unauthorised")
+    cursor = db.contact_messages.find({}, {"_id": 0}).sort("created_at", -1).limit(limit)
+    rows = await cursor.to_list(limit)
+    # cast datetime to iso for easier client consumption
+    for r in rows:
+        if isinstance(r.get("created_at"), datetime):
+            r["created_at"] = r["created_at"].isoformat()
+    return {"count": len(rows), "messages": rows}
+
+
+# --------------------------------------------------------------------------- #
+# Mount router + middleware
+# --------------------------------------------------------------------------- #
+app.include_router(api)
 
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
 
 @app.on_event("shutdown")
-async def shutdown_db_client():
+async def _shutdown():
     client.close()

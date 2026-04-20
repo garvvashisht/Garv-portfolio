@@ -1,6 +1,7 @@
 import React from "react";
 import { personal, heroMeta } from "../mock";
 import { ArrowUpRight, Download, MapPin, Sparkles } from "lucide-react";
+import { cvDownloadUrl } from "../api/client";
 
 const Hero = () => {
   const scrollTo = (id) => {
